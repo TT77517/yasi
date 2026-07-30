@@ -6,7 +6,7 @@
   </view>
 
   <view class="actions">
-    <button class="action-button action-button--primary">陪我练5分钟</button>
-    <button class="action-button action-button--secondary">完整模拟考试</button>
+    <button class="action-button action-button--primary" bindtap="openPractice">陪我练5分钟</button>
+    <button class="action-button action-button--secondary" bindtap="openMock">完整模拟考试</button>
   </view>
 </view>

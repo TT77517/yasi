@@ -1,0 +1,8 @@
+<view class="page">
+  <view class="content">
+    <text class="title">AI轻陪练</text>
+    <text class="description">5分钟轻松开口</text>
+  </view>
+
+  <button class="back-button" bindtap="backToHome">返回首页</button>
+</view>

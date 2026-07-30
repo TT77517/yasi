@@ -1,0 +1,45 @@
+.page {
+  min-height: 100vh;
+  padding: 192rpx 56rpx 96rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.title {
+  color: #172033;
+  font-size: 52rpx;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.description {
+  margin-top: 24rpx;
+  color: #7a8499;
+  font-size: 28rpx;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.back-button {
+  width: 100%;
+  max-width: 620rpx;
+  height: 96rpx;
+  margin-top: 144rpx;
+  color: #3157d5;
+  background: #edf1ff;
+  border-radius: 24rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 96rpx;
+}
+
+.back-button::after {
+  border: 0;
+}

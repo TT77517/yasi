@@ -1,2 +1,13 @@
-// 首页仅负责静态展示，暂不包含页面事件或业务逻辑。
-Page({})
+Page({
+  openPractice() {
+    wx.navigateTo({
+      url: '/pages/practice/index'
+    })
+  },
+
+  openMock() {
+    wx.navigateTo({
+      url: '/pages/mock/index'
+    })
+  }
+})
