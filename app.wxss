@@ -1,0 +1,12 @@
+/* 全局仅提供页面基础背景和盒模型设置。 */
+page {
+  min-height: 100%;
+  background: #f7f8fa;
+  color: #172033;
+  box-sizing: border-box;
+}
+
+view,
+button {
+  box-sizing: border-box;
+}

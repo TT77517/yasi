@@ -1,0 +1,12 @@
+<!-- SpeakEase 静态首页 -->
+<view class="page">
+  <view class="hero">
+    <text class="title">SpeakEase</text>
+    <text class="subtitle">Your AI Speaking Coach</text>
+  </view>
+
+  <view class="actions">
+    <button class="action-button action-button--primary">陪我练5分钟</button>
+    <button class="action-button action-button--secondary">完整模拟考试</button>
+  </view>
+</view>
