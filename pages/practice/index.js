@@ -1,10 +1,12 @@
 Page({
   data: {
     status: 'idle',
-    tempFilePath: ''
+    tempFilePath: '',
+    fileID: ''
   },
 
   analysisTimer: null,
+  uploadTask: null,
   recorderManager: null,
   handleRecorderStop: null,
   handleRecorderError: null,
@@ -69,7 +71,8 @@ Page({
     this.isRecording = true
     this.setData({
       status: 'recording',
-      tempFilePath: ''
+      tempFilePath: '',
+      fileID: ''
     })
   },
 
@@ -96,6 +99,7 @@ Page({
 
   stopRecord() {
     if (this.recorderManager && this.isRecording) {
+      this.isRecording = false
       this.recorderManager.stop()
     }
   },
@@ -104,15 +108,72 @@ Page({
     this.isRecording = false
     console.log('录音临时文件路径:', tempFilePath)
 
-    if (!this.isPageActive) {
+    if (
+      !this.isPageActive ||
+      this.uploadTask ||
+      this.data.status !== 'recording'
+    ) {
       return
     }
 
     this.clearAnalysisTimer()
     this.setData({
       tempFilePath,
+      fileID: '',
       status: 'analyzing'
+    }, () => {
+      this.uploadRecording(tempFilePath)
     })
+  },
+
+  uploadRecording(tempFilePath) {
+    if (this.uploadTask || !this.isPageActive) {
+      return
+    }
+
+    const timestamp = Date.now()
+    const randomString = Math.random().toString(36).slice(2, 10)
+    const cloudPath = `recordings/${timestamp}-${randomString}.mp3`
+
+    this.uploadTask = wx.cloud.uploadFile({
+      cloudPath,
+      filePath: tempFilePath,
+      success: ({ fileID }) => {
+        this.uploadTask = null
+        console.log('录音云文件 ID:', fileID)
+
+        if (!this.isPageActive) {
+          return
+        }
+
+        this.setData({
+          fileID
+        })
+        this.startAnalysisTimer()
+      },
+      fail: (error) => {
+        this.uploadTask = null
+        console.error('录音上传失败:', error)
+
+        if (!this.isPageActive) {
+          return
+        }
+
+        this.setData({
+          status: 'idle',
+          tempFilePath: '',
+          fileID: ''
+        })
+        wx.showToast({
+          title: '录音上传失败，请重试',
+          icon: 'none'
+        })
+      }
+    })
+  },
+
+  startAnalysisTimer() {
+    this.clearAnalysisTimer()
     this.analysisTimer = setTimeout(() => {
       this.analysisTimer = null
 
@@ -130,7 +191,9 @@ Page({
 
     if (this.isPageActive) {
       this.setData({
-        status: 'idle'
+        status: 'idle',
+        tempFilePath: '',
+        fileID: ''
       })
       wx.showToast({
         title: '录音失败，请重试',
@@ -142,7 +205,8 @@ Page({
   retryAnswer() {
     this.setData({
       status: 'idle',
-      tempFilePath: ''
+      tempFilePath: '',
+      fileID: ''
     })
   },
 
@@ -155,6 +219,14 @@ Page({
     if (this.analysisTimer) {
       clearTimeout(this.analysisTimer)
       this.analysisTimer = null
+    }
+  },
+
+  clearUploadTask() {
+    if (this.uploadTask && this.uploadTask.abort) {
+      const uploadTask = this.uploadTask
+      this.uploadTask = null
+      uploadTask.abort()
     }
   },
 
@@ -180,6 +252,7 @@ Page({
   onUnload() {
     this.isPageActive = false
     this.clearAnalysisTimer()
+    this.clearUploadTask()
     this.clearRecorder()
   }
 })
