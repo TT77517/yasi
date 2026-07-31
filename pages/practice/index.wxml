@@ -35,6 +35,10 @@
 
   <view wx:elif="{{status === 'feedback'}}" class="panel">
     <text class="feedback-title">今天做得很好</text>
+    <view wx:if="{{transcript}}" class="feedback-card">
+      <text class="feedback-label">我听到你说</text>
+      <text class="feedback-text transcript-text">{{transcript}}</text>
+    </view>
     <view class="feedback-card">
       <text class="feedback-label">反馈</text>
       <text class="feedback-text">你的回答清楚表达了周末活动。</text>

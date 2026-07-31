@@ -2,11 +2,14 @@ Page({
   data: {
     status: 'idle',
     tempFilePath: '',
-    fileID: ''
+    fileID: '',
+    transcript: ''
   },
 
   analysisTimer: null,
   uploadTask: null,
+  recognizingFileID: '',
+  recognitionRequestToken: 0,
   recorderManager: null,
   handleRecorderStop: null,
   handleRecorderError: null,
@@ -27,6 +30,10 @@ Page({
   },
 
   startRecord() {
+    if (!this.isPageActive || this.data.status !== 'idle') {
+      return
+    }
+
     wx.getSetting({
       success: ({ authSetting }) => {
         const recordPermission = authSetting['scope.record']
@@ -61,10 +68,16 @@ Page({
   },
 
   beginRecording() {
-    if (!this.recorderManager || !this.isPageActive) {
+    if (
+      !this.recorderManager ||
+      !this.isPageActive ||
+      this.data.status !== 'idle'
+    ) {
       return
     }
 
+    this.clearAnalysisTimer()
+    this.resetRecognitionRequest()
     this.recorderManager.start({
       format: 'mp3'
     })
@@ -72,7 +85,8 @@ Page({
     this.setData({
       status: 'recording',
       tempFilePath: '',
-      fileID: ''
+      fileID: '',
+      transcript: ''
     })
   },
 
@@ -120,6 +134,7 @@ Page({
     this.setData({
       tempFilePath,
       fileID: '',
+      transcript: '',
       status: 'analyzing'
     }, () => {
       this.uploadRecording(tempFilePath)
@@ -148,8 +163,9 @@ Page({
 
         this.setData({
           fileID
+        }, () => {
+          this.recognizeSpeech(fileID)
         })
-        this.startAnalysisTimer()
       },
       fail: (error) => {
         this.uploadTask = null
@@ -162,7 +178,8 @@ Page({
         this.setData({
           status: 'idle',
           tempFilePath: '',
-          fileID: ''
+          fileID: '',
+          transcript: ''
         })
         wx.showToast({
           title: '录音上传失败，请重试',
@@ -172,12 +189,94 @@ Page({
     })
   },
 
+  async recognizeSpeech(fileID) {
+    if (
+      !this.isPageActive ||
+      this.data.status !== 'analyzing' ||
+      !fileID ||
+      this.recognizingFileID === fileID
+    ) {
+      return
+    }
+
+    this.recognizingFileID = fileID
+    const requestToken = ++this.recognitionRequestToken
+
+    try {
+      const response = await wx.cloud.callFunction({
+        name: 'speechToText',
+        data: {
+          fileID
+        }
+      })
+
+      if (
+        !this.isPageActive ||
+        requestToken !== this.recognitionRequestToken
+      ) {
+        return
+      }
+
+      const functionResult = response.result
+      if (
+        !functionResult ||
+        functionResult.success !== true ||
+        typeof functionResult.transcript !== 'string' ||
+        !functionResult.transcript.trim()
+      ) {
+        this.handleRecognitionFailure({
+          message: '云函数返回无效的识别结果',
+          response
+        })
+        return
+      }
+
+      const transcript = functionResult.transcript.trim()
+      console.log('语音识别结果:', transcript)
+      this.setData({
+        transcript
+      })
+      this.startAnalysisTimer()
+    } catch (error) {
+      if (
+        this.isPageActive &&
+        requestToken === this.recognitionRequestToken
+      ) {
+        this.handleRecognitionFailure(error)
+      }
+    }
+  },
+
+  handleRecognitionFailure(error) {
+    console.error('语音识别失败:', error)
+
+    if (!this.isPageActive) {
+      return
+    }
+
+    this.clearAnalysisTimer()
+    this.setData({
+      status: 'idle',
+      tempFilePath: '',
+      fileID: '',
+      transcript: ''
+    })
+    wx.showToast({
+      title: '语音识别失败，请重试',
+      icon: 'none'
+    })
+  },
+
   startAnalysisTimer() {
     this.clearAnalysisTimer()
     this.analysisTimer = setTimeout(() => {
       this.analysisTimer = null
 
-      if (this.isPageActive) {
+      if (
+        this.isPageActive &&
+        this.data.status === 'analyzing' &&
+        this.data.transcript
+      ) {
         this.setData({
           status: 'feedback'
         })
@@ -193,7 +292,8 @@ Page({
       this.setData({
         status: 'idle',
         tempFilePath: '',
-        fileID: ''
+        fileID: '',
+        transcript: ''
       })
       wx.showToast({
         title: '录音失败，请重试',
@@ -203,15 +303,19 @@ Page({
   },
 
   retryAnswer() {
+    this.clearAnalysisTimer()
+    this.resetRecognitionRequest()
     this.setData({
       status: 'idle',
       tempFilePath: '',
-      fileID: ''
+      fileID: '',
+      transcript: ''
     })
   },
 
   completePractice() {
     this.clearAnalysisTimer()
+    this.resetRecognitionRequest()
     wx.navigateBack()
   },
 
@@ -228,6 +332,11 @@ Page({
       this.uploadTask = null
       uploadTask.abort()
     }
+  },
+
+  resetRecognitionRequest() {
+    this.recognitionRequestToken += 1
+    this.recognizingFileID = ''
   },
 
   clearRecorder() {
@@ -253,6 +362,7 @@ Page({
     this.isPageActive = false
     this.clearAnalysisTimer()
     this.clearUploadTask()
+    this.resetRecognitionRequest()
     this.clearRecorder()
   }
 })
