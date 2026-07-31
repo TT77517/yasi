@@ -1,8 +1,49 @@
 <view class="page">
-  <view class="content">
-    <text class="title">AI轻陪练</text>
-    <text class="description">5分钟轻松开口</text>
+  <text class="page-label">AI轻陪练</text>
+
+  <view wx:if="{{status === 'idle'}}" class="panel">
+    <text class="eyebrow">AI QUESTION</text>
+    <text class="question">What do you usually do at weekends?</text>
+    <button class="primary-button" bindtap="startRecord">开始回答</button>
   </view>
 
-  <button class="back-button" bindtap="backToHome">返回首页</button>
+  <view wx:elif="{{status === 'recording'}}" class="panel">
+    <view class="recording-indicator">
+      <view class="recording-dot"></view>
+      <text class="status-title">正在听你说……</text>
+    </view>
+    <button class="primary-button" bindtap="stopRecord">结束回答</button>
+  </view>
+
+  <view wx:elif="{{status === 'analyzing'}}" class="panel">
+    <text class="status-title">正在分析你的回答……</text>
+    <view class="steps">
+      <view class="step">
+        <view class="step-dot"></view>
+        <text>正在识别语音</text>
+      </view>
+      <view class="step">
+        <view class="step-dot"></view>
+        <text>正在评测表达</text>
+      </view>
+      <view class="step">
+        <view class="step-dot"></view>
+        <text>正在生成建议</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{status === 'feedback'}}" class="panel">
+    <text class="feedback-title">今天做得很好</text>
+    <view class="feedback-card">
+      <text class="feedback-label">反馈</text>
+      <text class="feedback-text">你的回答清楚表达了周末活动。</text>
+    </view>
+    <view class="feedback-card">
+      <text class="feedback-label">建议</text>
+      <text class="feedback-text">下一次可以补充一个具体例子。</text>
+    </view>
+    <button class="primary-button" bindtap="retryAnswer">再说一次</button>
+    <button class="secondary-button" bindtap="completePractice">完成练习</button>
+  </view>
 </view>

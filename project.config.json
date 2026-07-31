@@ -14,11 +14,12 @@
     "useCompilerPlugins": false
   },
   "compileType": "miniprogram",
+  "cloudfunctionRoot": "cloudfunctions/",
   "simulatorPluginLibVersion": {},
   "packOptions": {
     "ignore": [],
     "include": []
   },
-  "appid": "wx5ddf5cc0ade74b74",
+  "appid": "wx297df46b48149d34",
   "editorSetting": {}
 }

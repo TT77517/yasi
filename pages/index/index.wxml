@@ -8,5 +8,7 @@
   <view class="actions">
     <button class="action-button action-button--primary" bindtap="openPractice">陪我练5分钟</button>
     <button class="action-button action-button--secondary" bindtap="openMock">完整模拟考试</button>
+    <button class="action-button action-button--cloud" bindtap="testCloudFunction">测试云函数</button>
+    <text wx:if="{{cloudCallMessage}}" class="cloud-result">{{cloudCallMessage}}</text>
   </view>
 </view>

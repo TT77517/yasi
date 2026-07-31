@@ -56,3 +56,18 @@
   color: #3157d5;
   background: #edf1ff;
 }
+
+.action-button--cloud {
+  margin-top: 28rpx;
+  color: #59647a;
+  background: #ffffff;
+}
+
+.cloud-result {
+  margin-top: 24rpx;
+  display: block;
+  color: #59647a;
+  font-size: 26rpx;
+  line-height: 1.5;
+  text-align: center;
+}
