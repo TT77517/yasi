@@ -4,7 +4,6 @@
   "main": "index.js",
   "private": true,
   "dependencies": {
-    "tencentcloud-sdk-nodejs": "4.1.257",
     "wx-server-sdk": "4.0.2"
   }
 }

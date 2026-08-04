@@ -114,6 +114,54 @@
   line-height: 1.6;
 }
 
+.feedback-item {
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  display: flex;
+  flex-direction: column;
+  border-top: 2rpx solid #edf0f6;
+}
+
+.feedback-detail {
+  color: #59647a;
+  font-size: 27rpx;
+  line-height: 1.65;
+  word-break: break-word;
+}
+
+.feedback-detail + .feedback-detail {
+  margin-top: 8rpx;
+}
+
+.detail-label {
+  color: #303b52;
+  font-weight: 600;
+}
+
+.explanation-text,
+.example-text,
+.empty-text {
+  color: #7a8499;
+}
+
+.next-tip-card {
+  background: #edf1ff;
+}
+
+.next-tip-text {
+  color: #303b52;
+  font-weight: 600;
+}
+
+.feedback-actions {
+  width: 100%;
+  margin-top: 56rpx;
+}
+
+.feedback-actions .primary-button {
+  margin-top: 0;
+}
+
 .primary-button,
 .secondary-button {
   width: 100%;

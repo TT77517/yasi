@@ -3,12 +3,13 @@ Page({
     status: 'idle',
     tempFilePath: '',
     fileID: '',
-    transcript: ''
+    transcript: '',
+    feedback: null
   },
 
-  analysisTimer: null,
   uploadTask: null,
   recognizingFileID: '',
+  analyzingTranscript: '',
   recognitionRequestToken: 0,
   recorderManager: null,
   handleRecorderStop: null,
@@ -76,9 +77,12 @@ Page({
       return
     }
 
-    this.clearAnalysisTimer()
     this.resetRecognitionRequest()
     this.recorderManager.start({
+      duration: 60000,
+      sampleRate: 16000,
+      numberOfChannels: 1,
+      encodeBitRate: 48000,
       format: 'mp3'
     })
     this.isRecording = true
@@ -86,7 +90,8 @@ Page({
       status: 'recording',
       tempFilePath: '',
       fileID: '',
-      transcript: ''
+      transcript: '',
+      feedback: null
     })
   },
 
@@ -130,11 +135,11 @@ Page({
       return
     }
 
-    this.clearAnalysisTimer()
     this.setData({
       tempFilePath,
       fileID: '',
       transcript: '',
+      feedback: null,
       status: 'analyzing'
     }, () => {
       this.uploadRecording(tempFilePath)
@@ -179,7 +184,8 @@ Page({
           status: 'idle',
           tempFilePath: '',
           fileID: '',
-          transcript: ''
+          transcript: '',
+          feedback: null
         })
         wx.showToast({
           title: '录音上传失败，请重试',
@@ -224,10 +230,19 @@ Page({
         typeof functionResult.transcript !== 'string' ||
         !functionResult.transcript.trim()
       ) {
-        this.handleRecognitionFailure({
-          message: '云函数返回无效的识别结果',
-          response
-        })
+        const recognitionError = functionResult && functionResult.success === false
+          ? {
+              code: functionResult.code || 'STT_FAILED',
+              message: functionResult.message || '语音识别失败',
+              requestId: functionResult.requestId || ''
+            }
+          : {
+              code: 'INVALID_STT_RESPONSE',
+              message: '云函数返回无效的识别结果',
+              response
+            }
+
+        this.handleRecognitionFailure(recognitionError)
         return
       }
 
@@ -235,8 +250,9 @@ Page({
       console.log('语音识别结果:', transcript)
       this.setData({
         transcript
+      }, () => {
+        this.analyzeSpeaking(transcript, requestToken)
       })
-      this.startAnalysisTimer()
     } catch (error) {
       if (
         this.isPageActive &&
@@ -254,12 +270,12 @@ Page({
       return
     }
 
-    this.clearAnalysisTimer()
     this.setData({
       status: 'idle',
       tempFilePath: '',
       fileID: '',
-      transcript: ''
+      transcript: '',
+      feedback: null
     })
     wx.showToast({
       title: '语音识别失败，请重试',
@@ -267,21 +283,90 @@ Page({
     })
   },
 
-  startAnalysisTimer() {
-    this.clearAnalysisTimer()
-    this.analysisTimer = setTimeout(() => {
-      this.analysisTimer = null
+  async analyzeSpeaking(transcript, requestToken) {
+    if (
+      !this.isPageActive ||
+      this.data.status !== 'analyzing' ||
+      !transcript ||
+      requestToken !== this.recognitionRequestToken ||
+      this.analyzingTranscript
+    ) {
+      return
+    }
+
+    this.analyzingTranscript = transcript
+
+    try {
+      const response = await wx.cloud.callFunction({
+        name: 'analyzeSpeaking',
+        data: {
+          transcript
+        }
+      })
 
       if (
-        this.isPageActive &&
-        this.data.status === 'analyzing' &&
-        this.data.transcript
+        !this.isPageActive ||
+        requestToken !== this.recognitionRequestToken
       ) {
-        this.setData({
-          status: 'feedback'
-        })
+        return
       }
-    }, 1500)
+
+      const functionResult = response.result
+      const feedback = functionResult && functionResult.feedback
+      if (
+        !functionResult ||
+        functionResult.success !== true ||
+        !feedback ||
+        typeof feedback.overallFeedback !== 'string' ||
+        !Array.isArray(feedback.grammarCorrections) ||
+        !Array.isArray(feedback.vocabularySuggestions) ||
+        typeof feedback.improvedAnswer !== 'string' ||
+        typeof feedback.nextTip !== 'string'
+      ) {
+        this.handleAnalysisFailure({
+          message: '云函数返回无效的 AI 分析结果',
+          response
+        })
+        return
+      }
+
+      console.log('AI 分析结果:', feedback)
+      this.setData({
+        feedback,
+        status: 'feedback'
+      })
+    } catch (error) {
+      if (
+        this.isPageActive &&
+        requestToken === this.recognitionRequestToken
+      ) {
+        this.handleAnalysisFailure(error)
+      }
+    } finally {
+      if (requestToken === this.recognitionRequestToken) {
+        this.analyzingTranscript = ''
+      }
+    }
+  },
+
+  handleAnalysisFailure(error) {
+    console.error('AI 分析失败:', error)
+
+    if (!this.isPageActive) {
+      return
+    }
+
+    this.setData({
+      status: 'idle',
+      tempFilePath: '',
+      fileID: '',
+      transcript: '',
+      feedback: null
+    })
+    wx.showToast({
+      title: 'AI 分析失败，请重试',
+      icon: 'none'
+    })
   },
 
   onRecordError(error) {
@@ -293,7 +378,8 @@ Page({
         status: 'idle',
         tempFilePath: '',
         fileID: '',
-        transcript: ''
+        transcript: '',
+        feedback: null
       })
       wx.showToast({
         title: '录音失败，请重试',
@@ -303,27 +389,19 @@ Page({
   },
 
   retryAnswer() {
-    this.clearAnalysisTimer()
     this.resetRecognitionRequest()
     this.setData({
       status: 'idle',
       tempFilePath: '',
       fileID: '',
-      transcript: ''
+      transcript: '',
+      feedback: null
     })
   },
 
   completePractice() {
-    this.clearAnalysisTimer()
     this.resetRecognitionRequest()
     wx.navigateBack()
-  },
-
-  clearAnalysisTimer() {
-    if (this.analysisTimer) {
-      clearTimeout(this.analysisTimer)
-      this.analysisTimer = null
-    }
   },
 
   clearUploadTask() {
@@ -337,6 +415,7 @@ Page({
   resetRecognitionRequest() {
     this.recognitionRequestToken += 1
     this.recognizingFileID = ''
+    this.analyzingTranscript = ''
   },
 
   clearRecorder() {
@@ -360,7 +439,6 @@ Page({
 
   onUnload() {
     this.isPageActive = false
-    this.clearAnalysisTimer()
     this.clearUploadTask()
     this.resetRecognitionRequest()
     this.clearRecorder()

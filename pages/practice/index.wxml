@@ -33,21 +33,57 @@
     </view>
   </view>
 
-  <view wx:elif="{{status === 'feedback'}}" class="panel">
+  <view wx:elif="{{status === 'feedback' && feedback}}" class="panel">
     <text class="feedback-title">今天做得很好</text>
-    <view wx:if="{{transcript}}" class="feedback-card">
+    <view class="feedback-card">
       <text class="feedback-label">我听到你说</text>
       <text class="feedback-text transcript-text">{{transcript}}</text>
     </view>
     <view class="feedback-card">
-      <text class="feedback-label">反馈</text>
-      <text class="feedback-text">你的回答清楚表达了周末活动。</text>
+      <text class="feedback-label">整体反馈</text>
+      <text class="feedback-text">{{feedback.overallFeedback}}</text>
     </view>
     <view class="feedback-card">
-      <text class="feedback-label">建议</text>
-      <text class="feedback-text">下一次可以补充一个具体例子。</text>
+      <text class="feedback-label">语法建议</text>
+      <block wx:if="{{feedback.grammarCorrections.length}}">
+        <view
+          wx:for="{{feedback.grammarCorrections}}"
+          wx:key="original"
+          class="feedback-item"
+        >
+          <text class="feedback-detail"><text class="detail-label">原表达：</text>{{item.original}}</text>
+          <text class="feedback-detail"><text class="detail-label">修改后：</text>{{item.corrected}}</text>
+          <text class="feedback-detail explanation-text">{{item.explanation}}</text>
+        </view>
+      </block>
+      <text wx:else class="feedback-text empty-text">这次没有明显语法问题</text>
     </view>
-    <button class="primary-button" bindtap="retryAnswer">再说一次</button>
-    <button class="secondary-button" bindtap="completePractice">完成练习</button>
+    <view class="feedback-card">
+      <text class="feedback-label">词汇升级</text>
+      <block wx:if="{{feedback.vocabularySuggestions.length}}">
+        <view
+          wx:for="{{feedback.vocabularySuggestions}}"
+          wx:key="original"
+          class="feedback-item"
+        >
+          <text class="feedback-detail"><text class="detail-label">原表达：</text>{{item.original}}</text>
+          <text class="feedback-detail"><text class="detail-label">建议：</text>{{item.suggestion}}</text>
+          <text class="feedback-detail example-text">{{item.example}}</text>
+        </view>
+      </block>
+      <text wx:else class="feedback-text empty-text">这次表达已经很自然</text>
+    </view>
+    <view class="feedback-card">
+      <text class="feedback-label">优化后的回答</text>
+      <text class="feedback-text transcript-text">{{feedback.improvedAnswer}}</text>
+    </view>
+    <view class="feedback-card next-tip-card">
+      <text class="feedback-label">下一次只改这一点</text>
+      <text class="feedback-text next-tip-text">{{feedback.nextTip}}</text>
+    </view>
+    <view class="feedback-actions">
+      <button class="primary-button" bindtap="retryAnswer">再说一次</button>
+      <button class="secondary-button" bindtap="completePractice">完成练习</button>
+    </view>
   </view>
 </view>
