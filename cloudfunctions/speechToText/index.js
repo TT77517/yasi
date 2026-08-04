@@ -7,8 +7,8 @@ cloud.init({
 
 const DEFAULT_BASE_URL = 'https://dashscope.aliyuncs.com/api/v1'
 const DEFAULT_MODEL = 'paraformer-v2'
-const POLL_INTERVAL_MS = 1000
-const MAX_POLL_ATTEMPTS = 40
+const POLL_INTERVAL_MS = 1500
+const MAX_POLL_WAIT_MS = 45000
 const REQUEST_TIMEOUT_MS = 15000
 const MAX_RESPONSE_BYTES = 10 * 1024 * 1024
 
@@ -17,6 +17,14 @@ function createError(code, message, requestId = '') {
   error.code = code
   error.requestId = requestId
   return error
+}
+
+function logSpeechToTextError(error) {
+  console.error('speechToText 识别失败', {
+    code: error && error.code,
+    message: error && error.message,
+    requestId: (error && error.requestId) || ''
+  })
 }
 
 function getConfig() {
@@ -162,28 +170,45 @@ async function submitTranscription(audioUrl, config) {
     parameters.language_hints = ['en']
   }
 
-  const response = await requestJson(
-    `${config.baseUrl}/services/audio/asr/transcription`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${config.apiKey}`,
-        'X-DashScope-Async': 'enable'
-      },
-      body: {
-        model: config.model,
-        input: {
-          file_urls: [audioUrl]
+  let response
+  try {
+    response = await requestJson(
+      `${config.baseUrl}/services/audio/asr/transcription`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${config.apiKey}`,
+          'X-DashScope-Async': 'enable'
         },
-        parameters
+        body: {
+          model: config.model,
+          input: {
+            file_urls: [audioUrl]
+          },
+          parameters
+        }
       }
+    )
+  } catch (error) {
+    if (error.code === 'INVALID_DASHSCOPE_RESPONSE') {
+      throw createError(
+        'INVALID_STT_RESPONSE',
+        error.message,
+        error.requestId || ''
+      )
     }
-  )
+
+    throw createError(
+      'STT_SUBMIT_FAILED',
+      error.message || '语音识别任务提交失败',
+      error.requestId || ''
+    )
+  }
 
   const taskId = response.output && response.output.task_id
   if (!taskId) {
     throw createError(
-      response.code || 'INVALID_DASHSCOPE_RESPONSE',
+      'INVALID_STT_RESPONSE',
       response.message || '阿里云语音识别未返回任务 ID',
       response.request_id || ''
     )
@@ -196,42 +221,89 @@ async function submitTranscription(audioUrl, config) {
 }
 
 async function waitForTranscription(taskId, config) {
-  for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
-    await delay(POLL_INTERVAL_MS)
+  const pollingStartedAt = Date.now()
+  let pollNumber = 0
 
-    const response = await requestJson(
-      `${config.baseUrl}/tasks/${encodeURIComponent(taskId)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${config.apiKey}`
+  while (Date.now() - pollingStartedAt < MAX_POLL_WAIT_MS) {
+    const elapsedMs = Date.now() - pollingStartedAt
+    const remainingMs = MAX_POLL_WAIT_MS - elapsedMs
+    await delay(Math.min(POLL_INTERVAL_MS, remainingMs))
+
+    if (Date.now() - pollingStartedAt >= MAX_POLL_WAIT_MS) {
+      break
+    }
+
+    pollNumber += 1
+    let response
+    try {
+      response = await requestJson(
+        `${config.baseUrl}/tasks/${encodeURIComponent(taskId)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${config.apiKey}`
+          }
         }
+      )
+    } catch (error) {
+      if (error.code === 'INVALID_DASHSCOPE_RESPONSE') {
+        throw createError(
+          'INVALID_STT_RESPONSE',
+          error.message,
+          error.requestId || ''
+        )
       }
-    )
+
+      throw createError(
+        'STT_QUERY_FAILED',
+        error.message || '语音识别任务查询失败',
+        error.requestId || ''
+      )
+    }
+
     const output = response.output || {}
     const status = output.task_status
 
     if (typeof status !== 'string' || !status) {
       throw createError(
-        'INVALID_DASHSCOPE_RESPONSE',
+        'INVALID_STT_RESPONSE',
         '阿里云语音识别未返回任务状态',
         response.request_id || ''
       )
     }
 
-    if (status === 'SUCCEEDED') {
+    const taskStatus = status.toUpperCase()
+    console.log('speechToText 轮询状态', {
+      taskId,
+      pollNumber,
+      taskStatus
+    })
+
+    if (taskStatus === 'SUCCEEDED') {
       return response
     }
 
-    if (['FAILED', 'CANCELED', 'UNKNOWN'].includes(status)) {
+    if (taskStatus === 'FAILED') {
+      const results = Array.isArray(output.results) ? output.results : []
+      const failedResult = results.find(
+        (item) => item && (item.subtask_status === 'FAILED' || item.code)
+      )
       throw createError(
-        output.code || `DASHSCOPE_TASK_${status || 'FAILED'}`,
-        output.message || '阿里云语音识别任务失败',
+        (failedResult && failedResult.code) || output.code || 'STT_QUERY_FAILED',
+        (failedResult && failedResult.message) || output.message || '阿里云语音识别任务失败',
+        response.request_id || ''
+      )
+    }
+
+    if (!['PENDING', 'RUNNING'].includes(taskStatus)) {
+      throw createError(
+        'INVALID_STT_RESPONSE',
+        `阿里云语音识别返回未知任务状态：${taskStatus}`,
         response.request_id || ''
       )
     }
   }
 
-  throw createError('DASHSCOPE_TASK_TIMEOUT', '阿里云语音识别任务处理超时')
+  throw createError('STT_TIMEOUT', '语音识别处理超时，请重试')
 }
 
 function getTranscriptionUrl(taskResponse) {
@@ -242,7 +314,7 @@ function getTranscriptionUrl(taskResponse) {
   if (!completedResult) {
     const failedResult = results.find((item) => item && item.code)
     throw createError(
-      (failedResult && failedResult.code) || 'INVALID_DASHSCOPE_RESPONSE',
+      (failedResult && failedResult.code) || 'INVALID_STT_RESPONSE',
       (failedResult && failedResult.message) || '阿里云语音识别未返回结果地址',
       taskResponse.request_id || ''
     )
@@ -251,13 +323,86 @@ function getTranscriptionUrl(taskResponse) {
   return completedResult.transcription_url
 }
 
+function extractTextSegments(value) {
+  if (typeof value === 'string') {
+    const text = value.trim()
+    return text ? [text] : []
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => extractTextSegments(item))
+  }
+
+  if (!value || typeof value !== 'object') {
+    return []
+  }
+
+  const collectionKeys = [
+    'transcriptions',
+    'transcription',
+    'transcripts',
+    'paragraphs',
+    'paragraph',
+    'sentences',
+    'sentence'
+  ]
+
+  for (const key of collectionKeys) {
+    if (value[key] === undefined || value[key] === null) {
+      continue
+    }
+
+    const segments = extractTextSegments(value[key])
+    if (segments.length > 0) {
+      return segments
+    }
+  }
+
+  const wrapperKeys = ['results', 'result', 'output', 'data']
+  for (const key of wrapperKeys) {
+    if (value[key] === undefined || value[key] === null) {
+      continue
+    }
+
+    const segments = extractTextSegments(value[key])
+    if (segments.length > 0) {
+      return segments
+    }
+  }
+
+  const textKeys = ['text', 'transcript', 'content']
+  for (const key of textKeys) {
+    if (typeof value[key] === 'string' && value[key].trim()) {
+      return [value[key].trim()]
+    }
+  }
+
+  return []
+}
+
 async function readTranscript(transcriptionUrl) {
-  const result = await requestJson(transcriptionUrl)
-  const transcripts = Array.isArray(result.transcripts) ? result.transcripts : []
-  const transcript = transcripts
-    .map((item) => (item && typeof item.text === 'string' ? item.text.trim() : ''))
-    .filter(Boolean)
+  let result
+  try {
+    result = await requestJson(transcriptionUrl)
+  } catch (error) {
+    if (error.code === 'INVALID_DASHSCOPE_RESPONSE') {
+      throw createError(
+        'INVALID_STT_RESPONSE',
+        error.message,
+        error.requestId || ''
+      )
+    }
+
+    throw createError(
+      'STT_QUERY_FAILED',
+      error.message || '语音识别结果读取失败',
+      error.requestId || ''
+    )
+  }
+
+  const transcript = extractTextSegments(result)
     .join(' ')
+    .replace(/\s+/g, ' ')
     .trim()
 
   if (!transcript) {
@@ -285,8 +430,15 @@ async function cleanupRecording(fileID) {
 
 exports.main = async (event = {}) => {
   const fileID = typeof event.fileID === 'string' ? event.fileID.trim() : ''
+  console.log('speechToText 收到请求', {
+    hasFileID: Boolean(fileID)
+  })
 
   if (!fileID) {
+    logSpeechToTextError({
+      code: 'MISSING_FILE_ID',
+      message: '缺少录音文件 ID'
+    })
     return {
       success: false,
       code: 'MISSING_FILE_ID',
@@ -302,6 +454,7 @@ exports.main = async (event = {}) => {
   try {
     config = getConfig()
   } catch (error) {
+    logSpeechToTextError(error)
     return {
       success: false,
       code: error.code,
@@ -314,6 +467,10 @@ exports.main = async (event = {}) => {
   }
 
   if (!config) {
+    logSpeechToTextError({
+      code: 'MISSING_DASHSCOPE_CONFIG',
+      message: '云函数未配置阿里云百炼 API Key'
+    })
     return {
       success: false,
       code: 'MISSING_DASHSCOPE_CONFIG',
@@ -327,10 +484,29 @@ exports.main = async (event = {}) => {
 
   try {
     const audioUrl = await getAudioUrl(fileID)
+    console.log('speechToText 音频临时地址已生成', {
+      hasFileID: true,
+      audioUrlGenerated: true
+    })
+
+    const submittedAt = Date.now()
     const submission = await submitTranscription(audioUrl, config)
+    console.log('speechToText 任务提交成功', {
+      taskId: submission.taskId
+    })
+
     const taskResponse = await waitForTranscription(submission.taskId, config)
+    console.log('speechToText 任务完成', {
+      taskId: submission.taskId,
+      elapsedMs: Date.now() - submittedAt
+    })
+
     const transcriptionUrl = getTranscriptionUrl(taskResponse)
     const transcript = await readTranscript(transcriptionUrl)
+    console.log('speechToText 文本提取完成', {
+      taskId: submission.taskId,
+      transcriptLength: transcript.length
+    })
 
     return {
       success: true,
@@ -343,11 +519,7 @@ exports.main = async (event = {}) => {
       }
     }
   } catch (error) {
-    console.error('speechToText 识别失败', {
-      code: error.code,
-      message: error.message,
-      requestId: error.requestId
-    })
+    logSpeechToTextError(error)
 
     return {
       success: false,
