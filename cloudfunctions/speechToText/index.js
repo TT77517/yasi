@@ -267,6 +267,22 @@ async function readTranscript(transcriptionUrl) {
   return transcript
 }
 
+async function cleanupRecording(fileID) {
+  try {
+    await cloud.deleteFile({
+      fileList: [fileID]
+    })
+    return true
+  } catch (error) {
+    console.error('speechToText cleanup failed', {
+      fileID,
+      code: error && error.code,
+      message: error && error.message
+    })
+    return false
+  }
+}
+
 exports.main = async (event = {}) => {
   const fileID = typeof event.fileID === 'string' ? event.fileID.trim() : ''
 
@@ -274,7 +290,11 @@ exports.main = async (event = {}) => {
     return {
       success: false,
       code: 'MISSING_FILE_ID',
-      message: '缺少录音文件 ID'
+      message: '缺少录音文件 ID',
+      cleanup: {
+        attempted: false,
+        deleted: false
+      }
     }
   }
 
@@ -285,7 +305,11 @@ exports.main = async (event = {}) => {
     return {
       success: false,
       code: error.code,
-      message: error.message
+      message: error.message,
+      cleanup: {
+        attempted: false,
+        deleted: false
+      }
     }
   }
 
@@ -293,7 +317,11 @@ exports.main = async (event = {}) => {
     return {
       success: false,
       code: 'MISSING_DASHSCOPE_CONFIG',
-      message: '云函数未配置阿里云百炼 API Key'
+      message: '云函数未配置阿里云百炼 API Key',
+      cleanup: {
+        attempted: false,
+        deleted: false
+      }
     }
   }
 
@@ -307,7 +335,12 @@ exports.main = async (event = {}) => {
     return {
       success: true,
       transcript,
-      requestId: taskResponse.request_id || submission.requestId
+      fileID,
+      requestId: taskResponse.request_id || submission.requestId,
+      cleanup: {
+        attempted: false,
+        deleted: false
+      }
     }
   } catch (error) {
     console.error('speechToText 识别失败', {
@@ -320,7 +353,11 @@ exports.main = async (event = {}) => {
       success: false,
       code: error.code || 'STT_FAILED',
       message: error.message || '语音识别失败',
-      requestId: error.requestId || ''
+      requestId: error.requestId || '',
+      cleanup: {
+        attempted: false,
+        deleted: false
+      }
     }
   }
 }

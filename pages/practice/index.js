@@ -16,9 +16,13 @@ Page({
   handleRecorderError: null,
   isRecording: false,
   isPageActive: false,
+  recordingFileIDs: null,
+  cleanupRequestedFileIDs: null,
 
   onLoad() {
     this.isPageActive = true
+    this.recordingFileIDs = new Set()
+    this.cleanupRequestedFileIDs = new Set()
     this.recorderManager = wx.getRecorderManager()
     this.handleRecorderStop = (result) => {
       this.onRecordStop(result)
@@ -162,7 +166,12 @@ Page({
         this.uploadTask = null
         console.log('录音云文件 ID:', fileID)
 
+        if (fileID && this.recordingFileIDs) {
+          this.recordingFileIDs.add(fileID)
+        }
+
         if (!this.isPageActive) {
+          this.cleanupRecording(fileID)
           return
         }
 
@@ -247,9 +256,13 @@ Page({
       }
 
       const transcript = functionResult.transcript.trim()
+      const retainedFileID = typeof functionResult.fileID === 'string' && functionResult.fileID.trim()
+        ? functionResult.fileID.trim()
+        : fileID
       console.log('语音识别结果:', transcript)
       this.setData({
-        transcript
+        transcript,
+        fileID: retainedFileID
       }, () => {
         this.analyzeSpeaking(transcript, requestToken)
       })
@@ -400,8 +413,58 @@ Page({
   },
 
   completePractice() {
+    this.cleanupPracticeRecordings()
     this.resetRecognitionRequest()
     wx.navigateBack()
+  },
+
+  cleanupPracticeRecordings() {
+    const fileIDs = new Set(this.recordingFileIDs || [])
+
+    if (this.data.fileID) {
+      fileIDs.add(this.data.fileID)
+    }
+
+    fileIDs.forEach((fileID) => {
+      this.cleanupRecording(fileID)
+    })
+  },
+
+  cleanupRecording(fileID) {
+    const normalizedFileID = typeof fileID === 'string' ? fileID.trim() : ''
+
+    if (!normalizedFileID) {
+      return
+    }
+
+    if (!this.cleanupRequestedFileIDs) {
+      this.cleanupRequestedFileIDs = new Set()
+    }
+
+    if (this.cleanupRequestedFileIDs.has(normalizedFileID)) {
+      return
+    }
+
+    this.cleanupRequestedFileIDs.add(normalizedFileID)
+    wx.cloud.callFunction({
+      name: 'cleanupRecording',
+      data: {
+        fileID: normalizedFileID
+      }
+    }).then(({ result }) => {
+      if (!result || result.success !== true) {
+        console.error('录音清理失败', {
+          fileID: normalizedFileID,
+          message: (result && result.message) || '云函数返回无效结果'
+        })
+      }
+    }).catch((error) => {
+      console.error('录音清理调用失败', {
+        fileID: normalizedFileID,
+        code: error && error.code,
+        message: error && error.message
+      })
+    })
   },
 
   clearUploadTask() {
@@ -438,6 +501,7 @@ Page({
   },
 
   onUnload() {
+    this.cleanupPracticeRecordings()
     this.isPageActive = false
     this.clearUploadTask()
     this.resetRecognitionRequest()
