@@ -38,7 +38,12 @@
   text-align: center;
 }
 
+.recording-question {
+  font-size: 36rpx;
+}
+
 .recording-indicator {
+  margin-top: 64rpx;
   display: flex;
   align-items: center;
 }
@@ -99,6 +104,19 @@
   flex-direction: column;
   background: #ffffff;
   border-radius: 24rpx;
+}
+
+.question-card {
+  background: #f8f9fd;
+}
+
+.question-review-text {
+  color: #303b52;
+  font-weight: 600;
+}
+
+.empty-state-text {
+  text-align: center;
 }
 
 .feedback-label {
@@ -176,6 +194,10 @@
   margin-top: 112rpx;
   color: #ffffff;
   background: #3157d5;
+}
+
+.disabled-button {
+  opacity: 0.55;
 }
 
 .secondary-button {

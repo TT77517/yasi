@@ -1,15 +1,21 @@
+const { part1Questions } = require('../../data/questions')
+
 Page({
   data: {
     status: 'idle',
     tempFilePath: '',
     fileID: '',
     transcript: '',
-    feedback: null
+    feedback: null,
+    currentQuestion: null,
+    usedQuestionIds: [],
+    questionsInitialized: false
   },
 
   uploadTask: null,
   recognizingFileID: '',
   analyzingTranscript: '',
+  analysisTimer: null,
   recognitionRequestToken: 0,
   recorderManager: null,
   handleRecorderStop: null,
@@ -32,10 +38,15 @@ Page({
     }
     this.recorderManager.onStop(this.handleRecorderStop)
     this.recorderManager.onError(this.handleRecorderError)
+    this.selectNextQuestion()
   },
 
   startRecord() {
-    if (!this.isPageActive || this.data.status !== 'idle') {
+    if (
+      !this.isPageActive ||
+      this.data.status !== 'idle' ||
+      !this.data.currentQuestion
+    ) {
       return
     }
 
@@ -76,7 +87,8 @@ Page({
     if (
       !this.recorderManager ||
       !this.isPageActive ||
-      this.data.status !== 'idle'
+      this.data.status !== 'idle' ||
+      !this.data.currentQuestion
     ) {
       return
     }
@@ -401,6 +413,67 @@ Page({
     }
   },
 
+  selectNextQuestion() {
+    if (['recording', 'analyzing'].includes(this.data.status)) {
+      return
+    }
+
+    const previousFileID = this.data.fileID
+    if (previousFileID) {
+      this.cleanupRecording(previousFileID)
+    }
+
+    this.resetRecognitionRequest()
+
+    if (!Array.isArray(part1Questions) || part1Questions.length === 0) {
+      this.setData({
+        status: 'idle',
+        tempFilePath: '',
+        fileID: '',
+        transcript: '',
+        feedback: null,
+        currentQuestion: null,
+        usedQuestionIds: [],
+        questionsInitialized: true
+      })
+      return
+    }
+
+    const previousQuestionId = this.data.currentQuestion && this.data.currentQuestion.id
+    const questionIds = new Set(part1Questions.map((question) => question.id))
+    let usedQuestionIds = Array.isArray(this.data.usedQuestionIds)
+      ? this.data.usedQuestionIds.filter((id) => questionIds.has(id))
+      : []
+    let availableQuestions = part1Questions.filter(
+      (question) => !usedQuestionIds.includes(question.id)
+    )
+
+    if (availableQuestions.length === 0) {
+      usedQuestionIds = []
+      availableQuestions = part1Questions.slice()
+    }
+
+    if (availableQuestions.length > 1 && previousQuestionId) {
+      availableQuestions = availableQuestions.filter(
+        (question) => question.id !== previousQuestionId
+      )
+    }
+
+    const randomIndex = Math.floor(Math.random() * availableQuestions.length)
+    const currentQuestion = availableQuestions[randomIndex]
+
+    this.setData({
+      status: 'idle',
+      tempFilePath: '',
+      fileID: '',
+      transcript: '',
+      feedback: null,
+      currentQuestion,
+      usedQuestionIds: [...usedQuestionIds, currentQuestion.id],
+      questionsInitialized: true
+    })
+  },
+
   retryAnswer() {
     this.resetRecognitionRequest()
     this.setData({
@@ -410,6 +483,10 @@ Page({
       transcript: '',
       feedback: null
     })
+  },
+
+  nextQuestion() {
+    this.selectNextQuestion()
   },
 
   completePractice() {
@@ -476,9 +553,19 @@ Page({
   },
 
   resetRecognitionRequest() {
+    this.clearAnalysisTimer()
     this.recognitionRequestToken += 1
     this.recognizingFileID = ''
     this.analyzingTranscript = ''
+  },
+
+  clearAnalysisTimer() {
+    if (!this.analysisTimer) {
+      return
+    }
+
+    clearTimeout(this.analysisTimer)
+    this.analysisTimer = null
   },
 
   clearRecorder() {

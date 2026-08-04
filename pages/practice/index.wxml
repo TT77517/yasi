@@ -2,12 +2,26 @@
   <text class="page-label">AI轻陪练</text>
 
   <view wx:if="{{status === 'idle'}}" class="panel">
-    <text class="eyebrow">AI QUESTION</text>
-    <text class="question">What do you usually do at weekends?</text>
-    <button class="primary-button" bindtap="startRecord">开始回答</button>
+    <block wx:if="{{currentQuestion}}">
+      <text class="eyebrow">Part 1 · {{currentQuestion.topic}}</text>
+      <text class="question">{{currentQuestion.question}}</text>
+      <button class="primary-button" bindtap="startRecord">开始回答</button>
+    </block>
+    <block wx:elif="{{!questionsInitialized}}">
+      <text class="status-title empty-state-text">正在准备题目…</text>
+      <button class="primary-button disabled-button" disabled>开始回答</button>
+    </block>
+    <block wx:else>
+      <text class="status-title empty-state-text">暂无可用题目</text>
+      <button class="primary-button disabled-button" disabled>开始回答</button>
+    </block>
   </view>
 
   <view wx:elif="{{status === 'recording'}}" class="panel">
+    <block wx:if="{{currentQuestion}}">
+      <text class="eyebrow">Part 1 · {{currentQuestion.topic}}</text>
+      <text class="question recording-question">{{currentQuestion.question}}</text>
+    </block>
     <view class="recording-indicator">
       <view class="recording-dot"></view>
       <text class="status-title">正在听你说……</text>
@@ -35,6 +49,10 @@
 
   <view wx:elif="{{status === 'feedback' && feedback}}" class="panel">
     <text class="feedback-title">今天做得很好</text>
+    <view wx:if="{{currentQuestion}}" class="feedback-card question-card">
+      <text class="feedback-label">Part 1 · {{currentQuestion.topic}}</text>
+      <text class="feedback-text question-review-text">{{currentQuestion.question}}</text>
+    </view>
     <view class="feedback-card">
       <text class="feedback-label">我听到你说</text>
       <text class="feedback-text transcript-text">{{transcript}}</text>
@@ -83,6 +101,7 @@
     </view>
     <view class="feedback-actions">
       <button class="primary-button" bindtap="retryAnswer">再说一次</button>
+      <button class="secondary-button" bindtap="nextQuestion">下一题</button>
       <button class="secondary-button" bindtap="completePractice">完成练习</button>
     </view>
   </view>
