@@ -1,0 +1,43 @@
+<view class="se-page se-page-enter garden-page">
+  <view class="se-page-header garden-header">
+    <view class="se-header-logo" aria-label="SpeakEase flower logo">
+      <view class="se-logo-petal se-logo-petal--top"></view>
+      <view class="se-logo-petal se-logo-petal--right"></view>
+      <view class="se-logo-petal se-logo-petal--bottom"></view>
+      <view class="se-logo-petal se-logo-petal--left"></view>
+      <view class="se-logo-center"></view>
+    </view>
+    <text class="se-page-title">Garden</text>
+    <text class="se-page-subtitle">A little speaking, a little growing.</text>
+  </view>
+
+  <view class="se-card garden-card today-card">
+    <text class="card-label">今日练习</text>
+    <text class="card-sentence">今天陪小花说了 <text class="card-number se-number-enter">{{practiceMinutesText}}</text> 分钟</text>
+    <text class="card-detail">今天说了 {{practiceCount}} 次回答</text>
+  </view>
+
+  <view class="se-card garden-card streak-card">
+    <view class="stage-badge">
+      <text class="stage-emoji">{{flowerStageEmoji}}</text>
+    </view>
+    <view class="streak-copy">
+      <text class="card-label">连续成长 · {{flowerStageName}}</text>
+      <text class="card-sentence">已经连续成长 <text class="card-number card-number--green se-number-enter">{{streak}}</text> 天啦</text>
+    </view>
+  </view>
+
+  <view class="se-card garden-card tip-card">
+    <text class="card-label">今天的小成长</text>
+    <block wx:if="{{hasLatestTip}}">
+      <text class="tip-intro">🍃 今天的小花又长高一点～</text>
+      <text class="tip-content">{{latestTip}}</text>
+    </block>
+    <text wx:else class="tip-empty">今天说一句，小花就会开始发芽～</text>
+  </view>
+
+  <view class="se-card garden-card quote-card">
+    <text class="quote-label">今日一句</text>
+    <text class="quote-text">Small steps. Big confidence.</text>
+  </view>
+</view>

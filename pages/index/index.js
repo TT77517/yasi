@@ -1,6 +1,17 @@
+const { getTodaySummary } = require('../../utils/growth')
+
 Page({
   data: {
-    cloudCallMessage: ''
+    todayPracticeMinutes: '0',
+    streakDays: 0
+  },
+
+  onShow() {
+    const summary = getTodaySummary()
+    this.setData({
+      todayPracticeMinutes: summary.practiceMinutesText,
+      streakDays: summary.streak
+    })
   },
 
   openPractice() {
@@ -15,31 +26,9 @@ Page({
     })
   },
 
-  testCloudFunction() {
-    if (!wx.cloud) {
-      this.setData({
-        cloudCallMessage: '云函数调用失败'
-      })
-      return
-    }
-
-    this.setData({
-      cloudCallMessage: ''
-    })
-    wx.cloud.callFunction({
-      name: 'hello',
-      success: ({ result }) => {
-        console.log('hello 云函数返回:', result)
-        this.setData({
-          cloudCallMessage: '云函数调用成功'
-        })
-      },
-      fail: (error) => {
-        console.error('hello 云函数调用失败:', error)
-        this.setData({
-          cloudCallMessage: '云函数调用失败'
-        })
-      }
+  openGarden() {
+    wx.navigateTo({
+      url: '/pages/garden/index'
     })
   }
 })

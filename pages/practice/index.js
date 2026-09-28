@@ -1,4 +1,5 @@
 const { part1Questions } = require('../../data/questions')
+const { recordCompletedPractice } = require('../../utils/growth')
 
 Page({
   data: {
@@ -7,6 +8,8 @@ Page({
     fileID: '',
     transcript: '',
     feedback: null,
+    showFullFeedback: false,
+    recordingDuration: 0,
     currentQuestion: null,
     usedQuestionIds: [],
     questionsInitialized: false
@@ -16,6 +19,8 @@ Page({
   recognizingFileID: '',
   analyzingTranscript: '',
   analysisTimer: null,
+  recordingStartedAt: 0,
+  currentAnswerGrowthRecorded: false,
   recognitionRequestToken: 0,
   recorderManager: null,
   handleRecorderStop: null,
@@ -94,6 +99,8 @@ Page({
     }
 
     this.resetRecognitionRequest()
+    this.currentAnswerGrowthRecorded = false
+    this.recordingStartedAt = Date.now()
     this.recorderManager.start({
       duration: 60000,
       sampleRate: 16000,
@@ -107,7 +114,9 @@ Page({
       tempFilePath: '',
       fileID: '',
       transcript: '',
-      feedback: null
+      feedback: null,
+      showFullFeedback: false,
+      recordingDuration: 0
     })
   },
 
@@ -139,9 +148,21 @@ Page({
     }
   },
 
-  onRecordStop({ tempFilePath }) {
+  onRecordStop({ tempFilePath, duration }) {
     this.isRecording = false
     console.log('录音临时文件路径:', tempFilePath)
+
+    const reportedDuration = Number(duration)
+    const fallbackDuration = this.recordingStartedAt > 0
+      ? Date.now() - this.recordingStartedAt
+      : 0
+    const durationMilliseconds = Number.isFinite(reportedDuration) && reportedDuration > 0
+      ? reportedDuration
+      : fallbackDuration
+    const recordingDuration = durationMilliseconds > 0
+      ? Math.max(1, Math.round(durationMilliseconds / 1000))
+      : 0
+    this.recordingStartedAt = 0
 
     if (
       !this.isPageActive ||
@@ -156,6 +177,7 @@ Page({
       fileID: '',
       transcript: '',
       feedback: null,
+      recordingDuration,
       status: 'analyzing'
     }, () => {
       this.uploadRecording(tempFilePath)
@@ -209,7 +231,7 @@ Page({
           feedback: null
         })
         wx.showToast({
-          title: '录音上传失败，请重试',
+          title: '🌧 录音走丢了，再试一次～',
           icon: 'none'
         })
       }
@@ -303,7 +325,7 @@ Page({
       feedback: null
     })
     wx.showToast({
-      title: '语音识别失败，请重试',
+      title: '🌧 没有听清，再说一次好吗？',
       icon: 'none'
     })
   },
@@ -358,7 +380,10 @@ Page({
       console.log('AI 分析结果:', feedback)
       this.setData({
         feedback,
-        status: 'feedback'
+        status: 'feedback',
+        showFullFeedback: false
+      }, () => {
+        this.recordGrowthForCurrentAnswer(feedback, requestToken)
       })
     } catch (error) {
       if (
@@ -389,13 +414,14 @@ Page({
       feedback: null
     })
     wx.showToast({
-      title: 'AI 分析失败，请重试',
+      title: '🌷 再试一句会更自然～',
       icon: 'none'
     })
   },
 
   onRecordError(error) {
     this.isRecording = false
+    this.recordingStartedAt = 0
     console.error('录音失败:', error)
 
     if (this.isPageActive) {
@@ -404,10 +430,11 @@ Page({
         tempFilePath: '',
         fileID: '',
         transcript: '',
-        feedback: null
+        feedback: null,
+        recordingDuration: 0
       })
       wx.showToast({
-        title: '录音失败，请重试',
+        title: '🌧 没有听清，再说一次好吗？',
         icon: 'none'
       })
     }
@@ -424,6 +451,7 @@ Page({
     }
 
     this.resetRecognitionRequest()
+    this.currentAnswerGrowthRecorded = false
 
     if (!Array.isArray(part1Questions) || part1Questions.length === 0) {
       this.setData({
@@ -432,6 +460,8 @@ Page({
         fileID: '',
         transcript: '',
         feedback: null,
+        showFullFeedback: false,
+        recordingDuration: 0,
         currentQuestion: null,
         usedQuestionIds: [],
         questionsInitialized: true
@@ -468,6 +498,8 @@ Page({
       fileID: '',
       transcript: '',
       feedback: null,
+      showFullFeedback: false,
+      recordingDuration: 0,
       currentQuestion,
       usedQuestionIds: [...usedQuestionIds, currentQuestion.id],
       questionsInitialized: true
@@ -476,13 +508,59 @@ Page({
 
   retryAnswer() {
     this.resetRecognitionRequest()
+    this.currentAnswerGrowthRecorded = false
     this.setData({
       status: 'idle',
       tempFilePath: '',
       fileID: '',
       transcript: '',
-      feedback: null
+      feedback: null,
+      showFullFeedback: false,
+      recordingDuration: 0
     })
+  },
+
+  toggleFullFeedback() {
+    if (this.data.status !== 'feedback' || !this.data.feedback) {
+      return
+    }
+
+    this.setData({
+      showFullFeedback: !this.data.showFullFeedback
+    })
+  },
+
+  recordGrowthForCurrentAnswer(feedback, requestToken) {
+    const currentQuestion = this.data.currentQuestion
+    const transcript = this.data.transcript
+
+    if (
+      !this.isPageActive ||
+      this.data.status !== 'feedback' ||
+      requestToken !== this.recognitionRequestToken ||
+      this.currentAnswerGrowthRecorded ||
+      !currentQuestion ||
+      typeof transcript !== 'string' ||
+      !transcript.trim() ||
+      !feedback ||
+      typeof feedback.nextTip !== 'string'
+    ) {
+      return
+    }
+
+    this.currentAnswerGrowthRecorded = true
+    const result = recordCompletedPractice({
+      practiceSeconds: this.data.recordingDuration,
+      topic: currentQuestion.topic,
+      question: currentQuestion.question,
+      nextTip: feedback.nextTip
+    })
+
+    if (!result.success) {
+      console.error('成长记录保存失败', {
+        questionId: currentQuestion.id
+      })
+    }
   },
 
   nextQuestion() {
@@ -584,6 +662,7 @@ Page({
     }
 
     this.isRecording = false
+    this.recordingStartedAt = 0
     this.recorderManager = null
   },
 

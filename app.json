@@ -2,13 +2,14 @@
   "pages": [
     "pages/index/index",
     "pages/practice/index",
-    "pages/mock/index"
+    "pages/mock/index",
+    "pages/garden/index"
   ],
   "window": {
     "navigationBarTitleText": "SpeakEase",
-    "navigationBarBackgroundColor": "#F7F8FA",
+    "navigationBarBackgroundColor": "#FFFDF8",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#F7F8FA",
+    "backgroundColor": "#FFFDF8",
     "backgroundTextStyle": "light"
   },
   "style": "v2",

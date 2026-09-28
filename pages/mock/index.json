@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "完整模拟考试"
+  "navigationBarTitleText": "Mock",
+  "navigationBarBackgroundColor": "#FFFDF8",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#FFFDF8"
 }

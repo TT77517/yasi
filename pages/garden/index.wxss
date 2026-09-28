@@ -1,0 +1,120 @@
+.garden-page {
+  padding-top: 34rpx;
+  padding-bottom: 54rpx;
+  background: linear-gradient(160deg, #fff8fb 0%, #fffdf8 52%, #f2faf3 100%);
+}
+
+.garden-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.garden-card {
+  margin-top: 22rpx;
+}
+
+.today-card {
+  margin-top: 30rpx;
+}
+
+.card-label {
+  display: block;
+  color: #9a958e;
+  font-size: 22rpx;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.card-sentence {
+  display: block;
+  margin-top: 9rpx;
+  color: #6e6a64;
+  font-size: 29rpx;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.card-number {
+  color: #ff7898;
+  font-size: 36rpx;
+  font-weight: 800;
+}
+
+.card-number--green {
+  color: #76bd82;
+}
+
+.card-detail {
+  display: block;
+  margin-top: 5rpx;
+  color: #9a958e;
+  font-size: 22rpx;
+  line-height: 1.4;
+}
+
+.streak-card {
+  display: flex;
+  align-items: center;
+}
+
+.stage-badge {
+  width: 76rpx;
+  height: 76rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #edf8ee;
+  border-radius: 24rpx;
+}
+
+.stage-emoji {
+  font-size: 42rpx;
+  line-height: 1;
+}
+
+.streak-copy {
+  min-width: 0;
+  margin-left: 22rpx;
+}
+
+.tip-card {
+  background: rgba(255, 245, 204, 0.52);
+}
+
+.tip-intro,
+.tip-empty {
+  display: block;
+  margin-top: 10rpx;
+  color: #6e6a64;
+  font-size: 25rpx;
+  line-height: 1.5;
+}
+
+.tip-content {
+  display: block;
+  margin-top: 12rpx;
+  color: #52735a;
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.quote-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(248, 200, 220, 0.3);
+}
+
+.quote-label {
+  color: #9a958e;
+  font-size: 21rpx;
+}
+
+.quote-text {
+  color: #6e6a64;
+  font-size: 24rpx;
+  font-weight: 700;
+}

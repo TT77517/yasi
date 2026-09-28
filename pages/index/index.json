@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "SpeakEase"
+  "navigationBarTitleText": "SpeakEase",
+  "navigationBarBackgroundColor": "#FFFDF8",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#FFFDF8"
 }

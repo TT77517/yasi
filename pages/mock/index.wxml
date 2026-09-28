@@ -1,8 +1,21 @@
-<view class="page">
-  <view class="content">
-    <text class="title">完整模拟考试</text>
-    <text class="description">Part 1–3 模拟流程将在这里开始</text>
+<view class="se-page se-page-enter mock-page">
+  <view class="se-page-header mock-header">
+    <view class="se-header-logo" aria-label="SpeakEase flower logo">
+      <view class="se-logo-petal se-logo-petal--top"></view>
+      <view class="se-logo-petal se-logo-petal--right"></view>
+      <view class="se-logo-petal se-logo-petal--bottom"></view>
+      <view class="se-logo-petal se-logo-petal--left"></view>
+      <view class="se-logo-center"></view>
+    </view>
+    <text class="se-page-title">Mock</text>
+    <text class="se-page-subtitle">Ready when you are.</text>
   </view>
 
-  <button class="back-button" bindtap="backToHome">返回首页</button>
+  <view class="se-card mock-card">
+    <text class="mock-emoji">🌼</text>
+    <text class="mock-title">慢慢来，准备好再开口</text>
+    <text class="mock-description">Part 1–3 的完整模拟练习会在这里陪你一步一步进行。</text>
+  </view>
+
+  <button class="se-pill-button se-secondary-button back-button" hover-class="se-button-pressed" bindtap="backToHome">回到首页</button>
 </view>

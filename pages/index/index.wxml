@@ -1,14 +1,74 @@
-<!-- SpeakEase 静态首页 -->
-<view class="page">
-  <view class="hero">
-    <text class="title">SpeakEase</text>
-    <text class="subtitle">Your AI Speaking Coach</text>
+<!-- SpeakEase Design System v1.0 首页 -->
+<view class="se-page se-page-enter home-page">
+  <view class="ambient-shape ambient-shape--pink"></view>
+  <view class="ambient-shape ambient-shape--green"></view>
+
+  <view class="brand-section">
+    <view class="brand-mark" aria-label="SpeakEase flower logo">
+      <view class="brand-mark-tail"></view>
+      <view class="flower">
+        <view class="petal petal--top"></view>
+        <view class="petal petal--right"></view>
+        <view class="petal petal--bottom"></view>
+        <view class="petal petal--left"></view>
+        <view class="flower-center"></view>
+      </view>
+    </view>
+    <text class="brand-name">SpeakEase</text>
+    <text class="brand-slogan">Small steps. Big confidence.</text>
+    <text class="brand-welcome">今天也一起说一句吧</text>
   </view>
 
-  <view class="actions">
-    <button class="action-button action-button--primary" bindtap="openPractice">陪我练5分钟</button>
-    <button class="action-button action-button--secondary" bindtap="openMock">完整模拟考试</button>
-    <button class="action-button action-button--cloud" bindtap="testCloudFunction">测试云函数</button>
-    <text wx:if="{{cloudCallMessage}}" class="cloud-result">{{cloudCallMessage}}</text>
+  <view class="primary-actions">
+    <button
+      class="se-pill-button se-primary-button practice-button"
+      hover-class="se-button-pressed"
+      bindtap="openPractice"
+    >陪我练 5 分钟</button>
+    <text class="action-note">不用准备好，开口就已经在进步</text>
+    <button
+      class="se-pill-button se-secondary-button mock-button"
+      hover-class="se-button-pressed"
+      bindtap="openMock"
+    >完整模拟练习</button>
+  </view>
+
+  <view class="se-card growth-card">
+    <view class="section-heading">
+      <text class="se-section-title">今日成长</text>
+      <text class="growth-caption">每一点进步都算数</text>
+    </view>
+    <view class="growth-stats">
+      <view class="growth-stat">
+        <text class="growth-value se-number-enter">{{todayPracticeMinutes}}</text>
+        <text class="growth-unit">分钟</text>
+        <text class="growth-label">今天练习</text>
+      </view>
+      <view class="growth-divider"></view>
+      <view class="growth-stat">
+        <text class="growth-value growth-value--green se-number-enter">{{streakDays}}</text>
+        <text class="growth-unit">天</text>
+        <text class="growth-label">连续成长</text>
+      </view>
+    </view>
+  </view>
+
+  <view
+    class="garden-entry"
+    hover-class="se-button-pressed"
+    bindtap="openGarden"
+    role="button"
+    aria-label="My Garden，今天的小花也在等你开口"
+  >
+    <view class="sprout-icon">
+      <view class="sprout-stem"></view>
+      <view class="sprout-leaf sprout-leaf--left"></view>
+      <view class="sprout-leaf sprout-leaf--right"></view>
+    </view>
+    <view class="garden-copy">
+      <text class="garden-title">My Garden</text>
+      <text class="garden-subtitle">今天的小花也在等你开口～</text>
+    </view>
+    <text class="garden-arrow">›</text>
   </view>
 </view>

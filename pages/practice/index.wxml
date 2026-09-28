@@ -1,19 +1,29 @@
-<view class="page">
-  <text class="page-label">AI轻陪练</text>
+<view class="se-page se-page-enter practice-page">
+  <view class="se-page-header practice-header">
+    <view class="se-header-logo" aria-label="SpeakEase flower logo">
+      <view class="se-logo-petal se-logo-petal--top"></view>
+      <view class="se-logo-petal se-logo-petal--right"></view>
+      <view class="se-logo-petal se-logo-petal--bottom"></view>
+      <view class="se-logo-petal se-logo-petal--left"></view>
+      <view class="se-logo-center"></view>
+    </view>
+    <text class="se-page-title">Practice</text>
+    <text class="se-page-subtitle">Let's speak together.</text>
+  </view>
 
   <view wx:if="{{status === 'idle'}}" class="panel">
     <block wx:if="{{currentQuestion}}">
       <text class="eyebrow">Part 1 · {{currentQuestion.topic}}</text>
       <text class="question">{{currentQuestion.question}}</text>
-      <button class="primary-button" bindtap="startRecord">开始回答</button>
+      <button class="se-pill-button se-primary-button primary-button" hover-class="se-button-pressed" bindtap="startRecord">开口说一句</button>
     </block>
     <block wx:elif="{{!questionsInitialized}}">
-      <text class="status-title empty-state-text">正在准备题目…</text>
-      <button class="primary-button disabled-button" disabled>开始回答</button>
+      <text class="status-title empty-state-text">正在准备今天的小问题…</text>
+      <button class="se-pill-button se-primary-button primary-button disabled-button" disabled>开口说一句</button>
     </block>
     <block wx:else>
-      <text class="status-title empty-state-text">暂无可用题目</text>
-      <button class="primary-button disabled-button" disabled>开始回答</button>
+      <text class="status-title empty-state-text">小问题还在路上，请稍后再来～</text>
+      <button class="se-pill-button se-primary-button primary-button disabled-button" disabled>开口说一句</button>
     </block>
   </view>
 
@@ -24,85 +34,94 @@
     </block>
     <view class="recording-indicator">
       <view class="recording-dot"></view>
-      <text class="status-title">正在听你说……</text>
+      <text class="status-title">我在认真听你说…</text>
     </view>
-    <button class="primary-button" bindtap="stopRecord">结束回答</button>
+    <button class="se-pill-button se-primary-button primary-button recording-button" hover-class="se-button-pressed" bindtap="stopRecord">我说好啦</button>
   </view>
 
   <view wx:elif="{{status === 'analyzing'}}" class="panel">
-    <text class="status-title">正在分析你的回答……</text>
-    <view class="steps">
+    <text class="status-title">我在认真听你的回答…</text>
+    <view class="se-card steps">
       <view class="step">
         <view class="step-dot"></view>
-        <text>正在识别语音</text>
+        <text>把你的话听清楚</text>
       </view>
       <view class="step">
         <view class="step-dot"></view>
-        <text>正在评测表达</text>
+        <text>整理表达里的亮点</text>
       </view>
       <view class="step">
         <view class="step-dot"></view>
-        <text>正在生成建议</text>
+        <text>准备一条温柔建议</text>
       </view>
     </view>
   </view>
 
-  <view wx:elif="{{status === 'feedback' && feedback}}" class="panel">
-    <text class="feedback-title">今天做得很好</text>
-    <view wx:if="{{currentQuestion}}" class="feedback-card question-card">
-      <text class="feedback-label">Part 1 · {{currentQuestion.topic}}</text>
-      <text class="feedback-text question-review-text">{{currentQuestion.question}}</text>
-    </view>
-    <view class="feedback-card">
-      <text class="feedback-label">我听到你说</text>
-      <text class="feedback-text transcript-text">{{transcript}}</text>
-    </view>
-    <view class="feedback-card">
-      <text class="feedback-label">整体反馈</text>
-      <text class="feedback-text">{{feedback.overallFeedback}}</text>
-    </view>
-    <view class="feedback-card">
-      <text class="feedback-label">语法建议</text>
-      <block wx:if="{{feedback.grammarCorrections.length}}">
-        <view
-          wx:for="{{feedback.grammarCorrections}}"
-          wx:key="original"
-          class="feedback-item"
-        >
-          <text class="feedback-detail"><text class="detail-label">原表达：</text>{{item.original}}</text>
-          <text class="feedback-detail"><text class="detail-label">修改后：</text>{{item.corrected}}</text>
-          <text class="feedback-detail explanation-text">{{item.explanation}}</text>
-        </view>
-      </block>
-      <text wx:else class="feedback-text empty-text">这次没有明显语法问题</text>
-    </view>
-    <view class="feedback-card">
-      <text class="feedback-label">词汇升级</text>
-      <block wx:if="{{feedback.vocabularySuggestions.length}}">
-        <view
-          wx:for="{{feedback.vocabularySuggestions}}"
-          wx:key="original"
-          class="feedback-item"
-        >
-          <text class="feedback-detail"><text class="detail-label">原表达：</text>{{item.original}}</text>
-          <text class="feedback-detail"><text class="detail-label">建议：</text>{{item.suggestion}}</text>
-          <text class="feedback-detail example-text">{{item.example}}</text>
-        </view>
-      </block>
-      <text wx:else class="feedback-text empty-text">这次表达已经很自然</text>
-    </view>
-    <view class="feedback-card">
-      <text class="feedback-label">优化后的回答</text>
-      <text class="feedback-text transcript-text">{{feedback.improvedAnswer}}</text>
-    </view>
-    <view class="feedback-card next-tip-card">
-      <text class="feedback-label">下一次只改这一点</text>
+  <view wx:elif="{{status === 'feedback' && feedback}}" class="panel feedback-panel se-feedback-enter">
+    <text class="feedback-title">🌸 今天做得很好</text>
+
+    <view class="se-card feedback-card next-tip-card">
+      <text class="feedback-label">🌷 下一次只改这一点</text>
       <text class="feedback-text next-tip-text">{{feedback.nextTip}}</text>
     </view>
+
+    <button class="expand-button" hover-class="expand-button--pressed" bindtap="toggleFullFeedback">
+      {{showFullFeedback ? '收起完整建议' : '展开完整建议'}}
+    </button>
+
+    <view wx:if="{{showFullFeedback}}" class="full-feedback se-feedback-enter">
+      <view wx:if="{{currentQuestion}}" class="se-card feedback-card question-card">
+        <text class="feedback-label">Part 1 · {{currentQuestion.topic}}</text>
+        <text class="feedback-text question-review-text">{{currentQuestion.question}}</text>
+      </view>
+      <view class="se-card feedback-card">
+        <text class="feedback-label">你刚刚说</text>
+        <text class="feedback-text transcript-text">{{transcript}}</text>
+      </view>
+      <view class="se-card feedback-card">
+        <text class="feedback-label">🌸 我认真听完啦～</text>
+        <text class="feedback-text">{{feedback.overallFeedback}}</text>
+      </view>
+      <view class="se-card feedback-card">
+        <text class="feedback-label">Grammar · 语法</text>
+        <block wx:if="{{feedback.grammarCorrections.length}}">
+          <view
+            wx:for="{{feedback.grammarCorrections}}"
+            wx:key="original"
+            class="feedback-item"
+          >
+            <text class="feedback-detail"><text class="detail-label">原表达：</text>{{item.original}}</text>
+            <text class="feedback-detail"><text class="detail-label">可以这样说：</text>{{item.corrected}}</text>
+            <text class="feedback-detail explanation-text">{{item.explanation}}</text>
+          </view>
+        </block>
+        <text wx:else class="feedback-text empty-text">这次表达很顺畅，继续保持～</text>
+      </view>
+      <view class="se-card feedback-card">
+        <text class="feedback-label">Vocabulary · 词汇</text>
+        <block wx:if="{{feedback.vocabularySuggestions.length}}">
+          <view
+            wx:for="{{feedback.vocabularySuggestions}}"
+            wx:key="original"
+            class="feedback-item"
+          >
+            <text class="feedback-detail"><text class="detail-label">原表达：</text>{{item.original}}</text>
+            <text class="feedback-detail"><text class="detail-label">试试这个：</text>{{item.suggestion}}</text>
+            <text class="feedback-detail example-text">{{item.example}}</text>
+          </view>
+        </block>
+        <text wx:else class="feedback-text empty-text">这次用词很自然，做得很好～</text>
+      </view>
+      <view class="se-card feedback-card">
+        <text class="feedback-label">Improved Answer · 更自然的表达</text>
+        <text class="feedback-text transcript-text">{{feedback.improvedAnswer}}</text>
+      </view>
+    </view>
+
     <view class="feedback-actions">
-      <button class="primary-button" bindtap="retryAnswer">再说一次</button>
-      <button class="secondary-button" bindtap="nextQuestion">下一题</button>
-      <button class="secondary-button" bindtap="completePractice">完成练习</button>
+      <button class="se-pill-button se-primary-button primary-button" hover-class="se-button-pressed" bindtap="retryAnswer">再说一次</button>
+      <button class="se-pill-button se-secondary-button secondary-button" hover-class="se-button-pressed" bindtap="nextQuestion">下一题</button>
+      <button class="se-pill-button se-secondary-button secondary-button" hover-class="se-button-pressed" bindtap="completePractice">今天先到这里</button>
     </view>
   </view>
 </view>

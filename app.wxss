@@ -1,12 +1,190 @@
-/* 全局仅提供页面基础背景和盒模型设置。 */
+/* SpeakEase Design System v1.0 */
 page {
+  --se-cherry-pink: #f8c8dc;
+  --se-fresh-pink: #ff7898;
+  --se-sprout-green: #cdeccf;
+  --se-fresh-green: #a8e6b2;
+  --se-cream: #fffdf8;
+  --se-sunshine: #fff5cc;
+  --se-warm-gray: #6e6a64;
+  --se-muted-gray: #9a958e;
+  --se-page-gutter: 40rpx;
+  --se-radius-large: 24rpx;
+  --se-radius-card: 24rpx;
+
   min-height: 100%;
-  background: #f7f8fa;
-  color: #172033;
+  background: #fffdf8;
+  color: #6e6a64;
   box-sizing: border-box;
 }
 
 view,
-button {
+button,
+text {
   box-sizing: border-box;
+}
+
+.se-page {
+  min-height: 100vh;
+  padding-right: var(--se-page-gutter);
+  padding-left: var(--se-page-gutter);
+  color: var(--se-warm-gray);
+}
+
+.se-page-enter {
+  animation: seFadeIn 260ms ease-out both;
+}
+
+.se-card {
+  padding: 32rpx;
+  background: rgba(255, 255, 255, 0.88);
+  border: 2rpx solid rgba(110, 106, 100, 0.06);
+  border-radius: var(--se-radius-large);
+  box-shadow: 0 10rpx 30rpx rgba(110, 106, 100, 0.06);
+}
+
+.se-pill-button {
+  width: 100%;
+  height: 96rpx;
+  padding: 0 36rpx;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 96rpx;
+  letter-spacing: 1rpx;
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+.se-pill-button::after {
+  border: 0;
+}
+
+.se-primary-button {
+  color: #ffffff;
+  background: var(--se-fresh-pink);
+  box-shadow: 0 10rpx 24rpx rgba(255, 120, 152, 0.16);
+}
+
+.se-secondary-button {
+  color: #52735a;
+  background: var(--se-sprout-green);
+  box-shadow: 0 8rpx 20rpx rgba(105, 156, 114, 0.1);
+}
+
+.se-button-pressed {
+  opacity: 0.84;
+  transform: scale(0.98);
+}
+
+.se-section-title {
+  color: var(--se-warm-gray);
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.se-muted-text {
+  color: var(--se-muted-gray);
+}
+
+.se-page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.se-header-logo {
+  position: relative;
+  width: 72rpx;
+  height: 72rpx;
+  background: var(--se-sunshine);
+  border: 3rpx solid rgba(255, 120, 152, 0.15);
+  border-radius: 50%;
+  box-shadow: 0 8rpx 20rpx rgba(110, 106, 100, 0.06);
+}
+
+.se-logo-petal,
+.se-logo-center {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.se-logo-petal {
+  width: 23rpx;
+  height: 23rpx;
+  background: var(--se-fresh-pink);
+}
+
+.se-logo-petal--top {
+  top: 10rpx;
+  left: 24rpx;
+}
+
+.se-logo-petal--right {
+  top: 24rpx;
+  right: 10rpx;
+}
+
+.se-logo-petal--bottom {
+  bottom: 10rpx;
+  left: 24rpx;
+}
+
+.se-logo-petal--left {
+  top: 24rpx;
+  left: 10rpx;
+}
+
+.se-logo-center {
+  top: 25rpx;
+  left: 25rpx;
+  width: 21rpx;
+  height: 21rpx;
+  background: var(--se-cream);
+}
+
+.se-page-title {
+  margin-top: 14rpx;
+  color: var(--se-warm-gray);
+  font-size: 40rpx;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.se-page-subtitle {
+  margin-top: 6rpx;
+  color: var(--se-muted-gray);
+  font-size: 24rpx;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.se-feedback-enter {
+  animation: seFadeIn 260ms ease-out both;
+}
+
+.se-number-enter {
+  animation: seNumberIn 260ms ease-out both;
+}
+
+@keyframes seFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes seNumberIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

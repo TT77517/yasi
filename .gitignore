@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+miniprogram_npm/
+cloudfunctions/*/node_modules/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# WeChat Developer Tools local settings
+project.private.config.json
+
+# Codex temporary artifacts
+.codex-temp/
+.codex-tmp/
+*.inspect.ndjson
+
+# Interview materials and local screenshots
+*.pptx
+~$*.pptx
+/小程序页面/
+
+# Logs and operating-system files
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+
